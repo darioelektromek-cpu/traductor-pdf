@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Traductor de PDF</title>
+  <meta name="description" content="Traduce archivos PDF conservando el formato original. Funciona en tu equipo.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+</head>
+<body>
+  <div class="fondo" aria-hidden="true"></div>
+
+  <header class="cabecera">
+    <div class="contenedor cabecera-interior">
+      <div class="marca">
+        <span class="marca-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+            <path d="M8 13h4M8 17h6"/>
+          </svg>
+        </span>
+        <div>
+          <h1>Traductor de PDF</h1>
+          <p class="lema">Traduce documentos manteniendo su diseño</p>
+        </div>
+      </div>
+      <span class="etiqueta-local">Funciona en tu equipo</span>
+    </div>
+  </header>
+
+  <main class="contenedor">
+
+    <form id="formulario" data-max-mb="{{ max_mb }}" novalidate>
+      <!-- Paso 1: archivo -->
+      <section class="tarjeta">
+        <div class="paso"><span>1</span> Elige el archivo</div>
+
+        <div id="zona" class="zona" tabindex="0" role="button"
+             aria-label="Seleccionar o arrastrar un archivo PDF">
+          <svg class="zona-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <path d="M17 8l-5-5-5 5"/>
+            <path d="M12 3v12"/>
+          </svg>
+          <p class="zona-titulo">Arrastra tu PDF aquí</p>
+          <p class="zona-texto">o <span class="enlace">búscalo en tu equipo</span></p>
+          <p class="zona-limite">PDF hasta {{ max_mb }} MB</p>
+          <input type="file" id="archivo" name="archivo" accept="application/pdf,.pdf" hidden>
+        </div>
+
+        <div id="archivo-info" class="archivo-info oculto">
+          <span class="archivo-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+            </svg>
+          </span>
+          <div class="archivo-datos">
+            <p id="nombre-archivo" class="archivo-nombre"></p>
+            <p id="tamano-archivo" class="archivo-tamano"></p>
+          </div>
+          <button type="button" id="quitar-archivo" class="boton-icono" aria-label="Quitar archivo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Paso 2: idiomas -->
+      <section class="tarjeta">
+        <div class="paso"><span>2</span> Configura la traducción</div>
+
+        <div class="idiomas">
+          <label class="campo">
+            <span class="campo-etiqueta">Idioma original</span>
+            <select id="origen" name="origen">
+              {% for codigo, nombre in idiomas.items() %}
+                <option value="{{ codigo }}" {% if codigo == 'auto' %}selected{% endif %}>{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <button type="button" id="intercambiar" class="boton-intercambiar"
+                  title="Intercambiar idiomas" aria-label="Intercambiar idiomas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 16H3m0 0 4-4m-4 4 4 4"/>
+              <path d="M17 8h4m0 0-4-4m4 4-4 4"/>
+            </svg>
+          </button>
+
+          <label class="campo">
+            <span class="campo-etiqueta">Traducir a</span>
+            <select id="destino" name="destino">
+              {% for codigo, nombre in idiomas.items() %}
+                {% if codigo != 'auto' %}
+                  <option value="{{ codigo }}" {% if codigo == 'es' %}selected{% endif %}>{{ nombre }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <p id="nota-idioma" class="nota oculto"></p>
+
+        <label class="campo">
+          <span class="campo-etiqueta">Motor de traducción</span>
+          <select id="motor" name="motor">
+            {% for codigo, nombre in motores.items() %}
+              <option value="{{ codigo }}" {% if codigo == 'auto' %}selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <p id="nota-motor" class="nota">
+          El modo automático intenta Google y, si falla, usa MyMemory.
+        </p>
+
+        <div id="campos-deepl" class="campos-extra oculto">
+          <label class="campo">
+            <span class="campo-etiqueta">Clave API de DeepL</span>
+            <input type="password" id="deepl-key" name="deepl_key" autocomplete="off"
+                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx">
+          </label>
+          <p class="nota">La clave solo se envía a este servidor local y no se guarda en disco.</p>
+        </div>
+
+        <div id="campos-libre" class="campos-extra oculto">
+          <label class="campo">
+            <span class="campo-etiqueta">URL del servidor LibreTranslate</span>
+            <input type="url" id="libre-url" name="libre_url" autocomplete="off"
+                   placeholder="https://mi-servidor:5000">
+          </label>
+          <label class="campo">
+            <span class="campo-etiqueta">Clave API (opcional)</span>
+            <input type="password" id="libre-key" name="libre_key" autocomplete="off">
+          </label>
+        </div>
+
+        <p id="error-formulario" class="error oculto" role="alert"></p>
+
+        <button type="submit" id="boton-traducir" class="boton principal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1"/>
+            <path d="m22 22-5-10-5 10M14 18h6"/>
+          </svg>
+          Traducir PDF
+        </button>
+
+        <p class="privacidad">
+          El texto del PDF se envía al motor de traducción elegido.
+          El archivo se procesa en tu equipo y los trabajos temporales se borran solos.
+        </p>
+      </section>
+    </form>
+
+    <!-- Progreso -->
+    <section id="progreso" class="tarjeta oculto" aria-live="polite">
+      <div class="progreso-cabecera">
+        <h2 id="progreso-titulo">Traduciendo…</h2>
+        <span id="porcentaje" class="porcentaje">0 %</span>
+      </div>
+      <div class="barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barra">
+        <div id="barra-relleno" class="barra-relleno"></div>
+      </div>
+      <p id="estado-texto" class="estado-texto">Preparando el documento…</p>
+      <p id="detalle-texto" class="detalle"></p>
+      <button type="button" id="boton-cancelar" class="boton secundario">Cancelar</button>
+    </section>
+
+    <!-- Resultado -->
+    <section id="resultado" class="tarjeta oculto">
+      <div class="resultado-cabecera">
+        <span class="check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </span>
+        <div>
+          <h2>Tu PDF traducido está listo</h2>
+          <p id="resumen" class="resumen"></p>
+        </div>
+      </div>
+
+      <p id="aviso" class="aviso oculto"></p>
+
+      <div class="acciones">
+        <a id="boton-pdf" class="boton principal" href="#" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <path d="M7 10l5 5 5-5"/>
+            <path d="M12 15V3"/>
+          </svg>
+          Descargar PDF
+        </a>
+        <a id="boton-txt" class="boton secundario" href="#" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>
+          </svg>
+          Descargar texto
+        </a>
+        <a id="boton-ver" class="boton secundario" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 3h6v6"/><path d="M10 14 21 3"/>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          </svg>
+          Abrir aparte
+        </a>
+      </div>
+
+      <div class="marco">
+        <iframe id="marco" title="Vista previa del PDF traducido"></iframe>
+      </div>
+
+      <button type="button" id="otro" class="boton texto">Traducir otro PDF</button>
+    </section>
+
+    <footer class="pie">
+      <p>Consejo: los PDF escaneados (imágenes) no contienen texto, así que no se pueden traducir sin OCR.</p>
+      <p>Árabe, hebreo, hindi y tailandés pueden no mostrarse correctamente por limitaciones de composición tipográfica del PDF.</p>
+    </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

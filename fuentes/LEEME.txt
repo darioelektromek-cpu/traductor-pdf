@@ -1,0 +1,30 @@
+Carpeta de fuentes
+==================
+
+En tu equipo (Windows) la aplicación usa automáticamente Segoe UI o Arial.
+En un hosting Linux esas fuentes no existen, así que puedes copiar aquí
+archivos de fuente para que el PDF traducido conserve un aspecto similar.
+
+Formatos admitidos: .ttf, .otf y .ttc
+
+Qué copiar
+----------
+- Para idiomas con alfabeto latino, cirílico, griego, árabe o hebreo:
+  una fuente como DejaVuSans.ttf, LiberationSans-Regular.ttf o Roboto-Regular.ttf.
+
+- Para chino, japonés o coreano: una fuente CJK, por ejemplo
+  NotoSansCJK-Regular.ttc. El nombre del archivo debe contener una de estas
+  palabras para que se reconozca: cjk, noto, han, song, hei, ming.
+
+Dónde conseguirlas (gratuitas)
+------------------------------
+- DejaVu:   https://dejavu-fonts.github.io/
+- Noto:     https://fonts.google.com/noto
+- Liberation: https://github.com/liberationfonts/liberation-fonts
+
+Notas
+-----
+- Si esta carpeta está vacía, la aplicación intenta usar las fuentes del
+  sistema y, si no hay ninguna, la fuente interna del PDF (Helvetica).
+- No es necesario renombrar los archivos: basta con que incluyan la palabra
+  clave. Por ejemplo, NotoSansCJK-Regular.ttc se detecta como CJK.
