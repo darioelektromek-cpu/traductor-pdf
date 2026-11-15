@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: traductor-pdf
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements-render.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180 --access-logfile - --error-logfile -
+    healthCheckPath: /api/salud
+    envVars:
+      - key: TRADUCTOR_DATOS
+        value: /tmp/traductor_pdf
+      - key: TRADUCTOR_MAX_MB
+        value: "10"
+      - key: TRADUCTOR_USUARIO
+        sync: false
+      - key: TRADUCTOR_CLAVE
+        sync: false
